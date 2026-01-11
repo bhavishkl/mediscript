@@ -109,7 +109,7 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
                 return categories.map(([category, items]: [string, InvestigationEntry[]], catIndex) => {
                   // Check if adding this category (header + items) would exceed 15 rows
                   const categoryRowCount = 1 + items.length; // 1 for header + items
-                  const needsPageBreak = rowCount > 0 && rowCount + categoryRowCount > 15;
+                  const needsPageBreak = rowCount > 0 && rowCount + categoryRowCount > 16;
 
                   // If we need a page break, reset the counter
                   if (needsPageBreak) {
