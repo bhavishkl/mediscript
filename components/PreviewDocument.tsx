@@ -102,29 +102,53 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
           <section>
             <h2 className="font-bold uppercase text-base mb-2 underline">Investigations:</h2>
             <div className="w-full border border-black text-base">
-              {Object.entries(groupedInvestigations).map(([category, items]: [string, InvestigationEntry[]], catIndex) => (
-                <React.Fragment key={category}>
-                  {/* Category Header */}
-                  <div className={`font-bold p-1 bg-gray-100 uppercase border-b border-black ${catIndex > 0 ? '' : ''}`}>
-                    {category}
-                  </div>
-                  {/* Items */}
-                  {items.map((item, index) => (
-                    <div key={item.id} className="flex border-b border-black last:border-b-0">
-                      {/* Date Column */}
-                      <div className="w-28 p-1 border-r border-black flex-shrink-0">
-                        {formatDate(item.date)}
+              {(() => {
+                let rowCount = 0;
+                const categories = Object.entries(groupedInvestigations);
+
+                return categories.map(([category, items]: [string, InvestigationEntry[]], catIndex) => {
+                  // Check if adding this category (header + items) would exceed 15 rows
+                  const categoryRowCount = 1 + items.length; // 1 for header + items
+                  const needsPageBreak = rowCount > 0 && rowCount + categoryRowCount > 15;
+
+                  // If we need a page break, reset the counter
+                  if (needsPageBreak) {
+                    rowCount = 0;
+                  }
+
+                  // Update row count for this category
+                  rowCount += categoryRowCount;
+
+                  return (
+                    <React.Fragment key={category}>
+                      {/* Page Break before category if needed */}
+                      {needsPageBreak && (
+                        <div className="page-break-before" style={{ pageBreakBefore: 'always', breakBefore: 'page' }} />
+                      )}
+
+                      {/* Category Header */}
+                      <div className={`font-bold p-1 bg-gray-100 uppercase border-b border-black ${catIndex > 0 && !needsPageBreak ? '' : ''}`}>
+                        {category}
                       </div>
-                      {/* Description Column */}
-                      <div className="flex-1 p-1">
-                        <span className="font-semibold">{item.name}</span>
-                        {item.name && item.result && <span> - </span>}
-                        <span>{item.result}</span>
-                      </div>
-                    </div>
-                  ))}
-                </React.Fragment>
-              ))}
+                      {/* Items */}
+                      {items.map((item, index) => (
+                        <div key={item.id} className="flex border-b border-black last:border-b-0">
+                          {/* Date Column */}
+                          <div className="w-28 p-1 border-r border-black flex-shrink-0">
+                            {formatDate(item.date)}
+                          </div>
+                          {/* Description Column */}
+                          <div className="flex-1 p-1">
+                            <span className="font-semibold">{item.name}</span>
+                            {item.name && item.result && <span> - </span>}
+                            <span>{item.result}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </React.Fragment>
+                  );
+                });
+              })()}
             </div>
           </section>
         )}
