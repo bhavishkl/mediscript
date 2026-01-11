@@ -7,7 +7,7 @@ interface PreviewDocumentProps {
 
 // Using forwardRef to allow the parent to target this component for PDF generation
 export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(({ data }, ref) => {
-  
+
   // Helper to format dates to DD/MM/YYYY
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -37,26 +37,21 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
 
   return (
     <div ref={ref} className="bg-white text-black p-8 max-w-[210mm] mx-auto min-h-[297mm] shadow-lg print-area text-base leading-relaxed box-border">
-      
-      {/* Header Section */}
-      <div className="flex flex-col mb-4">
-        
-        {/* Top Row: Placeholder for Pre-printed Header (Logo & Doctor Details removed but space preserved) */}
-        <div className="flex justify-between items-start mb-6 w-full">
-            {/* Left Side Placeholder - Keeps height */}
-            <div className="h-48 flex items-center justify-start pr-4"> 
-              {/* Content removed to preserve space for pre-printed letterhead */}
-            </div>
 
-            {/* Right Side Placeholder */}
-            <div className="text-right flex flex-col items-end pt-2 min-w-max">
-                {/* Content removed to preserve space for pre-printed letterhead */}
-            </div>
-        </div>
-        
-        <h1 className="text-2xl font-bold text-center uppercase tracking-wide mt-2 mb-6 underline decoration-2 underline-offset-4">
+      {/* Header Section */}
+      <div className="flex flex-col mt-14 mb-2">
+        <h1 className="text-xl font-bold text-center uppercase tracking-wide mt-2 mb-2 underline decoration-2 underline-offset-4">
           Discharge Summary
         </h1>
+
+        {/* Discharge Against Medical Advice Warning */}
+        {data.dischargeAgainstMedicalAdvice && (
+          <div className="bg-yellow-300 text-center">
+            <h2 className="text-l font-bold uppercase tracking-wide underline decoration-2 underline-offset-4">
+              Discharge Against Medical Advice
+            </h2>
+          </div>
+        )}
       </div>
 
       {/* Patient Info Table - Exact replication of borders */}
@@ -89,7 +84,7 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
 
       {/* Medical Content */}
       <div className="space-y-6">
-        
+
         {/* Final Diagnosis */}
         <section>
           <h2 className="font-bold uppercase text-base mb-2 underline">Final Diagnosis:</h2>
@@ -116,16 +111,16 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
                   {/* Items */}
                   {items.map((item, index) => (
                     <div key={item.id} className="flex border-b border-black last:border-b-0">
-                       {/* Date Column */}
-                       <div className="w-28 p-1 border-r border-black flex-shrink-0">
-                         {formatDate(item.date)}
-                       </div>
-                       {/* Description Column */}
-                       <div className="flex-1 p-1">
-                         <span className="font-semibold">{item.name}</span>
-                         {item.name && item.result && <span> - </span>}
-                         <span>{item.result}</span>
-                       </div>
+                      {/* Date Column */}
+                      <div className="w-28 p-1 border-r border-black flex-shrink-0">
+                        {formatDate(item.date)}
+                      </div>
+                      {/* Description Column */}
+                      <div className="flex-1 p-1">
+                        <span className="font-semibold">{item.name}</span>
+                        {item.name && item.result && <span> - </span>}
+                        <span>{item.result}</span>
+                      </div>
                     </div>
                   ))}
                 </React.Fragment>
@@ -184,9 +179,9 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
 
         {/* Signature */}
         <div className="flex justify-end pt-16 pb-4">
-           <div className="text-right">
-              <p className="font-bold underline uppercase text-base">Consultant Name and Signature</p>
-           </div>
+          <div className="text-right">
+            <p className="font-bold underline uppercase text-base">Consultant Name and Signature</p>
+          </div>
         </div>
 
       </div>

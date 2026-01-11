@@ -1,6 +1,6 @@
 import React from 'react';
 import { DischargeData, InvestigationEntry, TreatmentEntry } from '../types';
-import { Upload, X, FileText, Activity, Pill, CalendarClock, ClipboardList, Plus, Trash2 } from 'lucide-react';
+import { FileText, Activity, Pill, CalendarClock, ClipboardList, Plus, Trash2, AlertTriangle } from 'lucide-react';
 
 interface EditorFormProps {
   data: DischargeData;
@@ -8,21 +8,12 @@ interface EditorFormProps {
 }
 
 export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
-  
+
   const handleChange = (field: keyof DischargeData, value: any) => {
     onChange({ ...data, [field]: value });
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleChange('logoBase64', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
 
   // --- Investigation Handlers ---
   const addInvestigation = () => {
@@ -41,7 +32,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
   };
 
   const updateInvestigation = (id: string, field: keyof InvestigationEntry, value: string) => {
-    handleChange('investigations', data.investigations.map(i => 
+    handleChange('investigations', data.investigations.map(i =>
       i.id === id ? { ...i, [field]: value } : i
     ));
   };
@@ -61,52 +52,15 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
   };
 
   const updateTreatment = (id: string, field: keyof TreatmentEntry, value: string) => {
-    handleChange('treatmentGiven', data.treatmentGiven.map(t => 
+    handleChange('treatmentGiven', data.treatmentGiven.map(t =>
       t.id === id ? { ...t, [field]: value } : t
     ));
   };
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 space-y-8">
-      
-      {/* Branding Section */}
-      <section className="border-b pb-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-700">
-          <FileText size={20} /> Hospital Branding
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Logo</label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
-                <Upload size={16} className="mr-2" />
-                Upload Logo
-                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-              </label>
-              {data.logoBase64 && (
-                <div className="relative group">
-                  <img src={data.logoBase64} alt="Preview" className="h-10 w-auto object-contain border rounded" />
-                  <button 
-                    onClick={() => handleChange('logoBase64', null)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Name (Fallback)</label>
-            <input
-              type="text"
-              className="w-full rounded-md border-gray-300 border p-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-              value={data.hospitalName}
-              onChange={(e) => handleChange('hospitalName', e.target.value)}
-            />
-          </div>
-        </div>
-      </section>
+
+
 
       {/* Patient Details */}
       <section className="border-b pb-6">
@@ -180,12 +134,34 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
         </div>
       </section>
 
+      {/* Discharge Against Medical Advice Toggle */}
+      <section className="border-b pb-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-700">
+          <AlertTriangle size={20} /> Discharge Status
+        </h2>
+        <div className="flex items-center gap-3">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={data.dischargeAgainstMedicalAdvice}
+              onChange={(e) => handleChange('dischargeAgainstMedicalAdvice', e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+          </label>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">Discharge Against Medical Advice</span>
+            <span className="text-xs text-gray-500">Enable to show warning in document</span>
+          </div>
+        </div>
+      </section>
+
       {/* Clinical Info */}
       <section className="border-b pb-6">
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-700">
           <Activity size={20} /> Clinical Information
         </h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Final Diagnosis</label>
@@ -216,7 +192,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
         <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 text-gray-700">
           <Activity size={20} /> Investigations
         </h2>
-        
+
         <div className="space-y-4">
           {data.investigations.map((inv) => (
             <div key={inv.id} className="p-4 bg-gray-50 border border-gray-200 rounded-md">
@@ -228,15 +204,15 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
                   value={inv.category}
                   onChange={(e) => updateInvestigation(inv.id, 'category', e.target.value)}
                 />
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                   <input
+                  <input
                     type="date"
                     className="w-full rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
                     value={inv.date}
                     onChange={(e) => updateInvestigation(inv.id, 'date', e.target.value)}
                   />
-                   <input
+                  <input
                     type="text"
                     className="w-full sm:col-span-2 rounded border-gray-300 border p-2 text-sm focus:ring-2 focus:ring-teal-500 outline-none"
                     placeholder="Investigation Name (e.g., CXR)"
@@ -280,7 +256,7 @@ export const EditorForm: React.FC<EditorFormProps> = ({ data, onChange }) => {
           <Pill size={20} /> Treatment Given
         </h2>
         <div className="space-y-4">
-          
+
           {data.treatmentGiven.map((tx) => (
             <div key={tx.id} className="p-4 bg-gray-50 border border-gray-200 rounded-md">
               <div className="space-y-2">

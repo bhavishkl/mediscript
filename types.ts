@@ -28,6 +28,7 @@ export interface DischargeData {
   hospitalCourse: string;
   dischargeAdvice: string;
   followUp: string;
+  dischargeAgainstMedicalAdvice: boolean;
 }
 
 export const INITIAL_DATA: DischargeData = {
@@ -45,5 +46,6 @@ export const INITIAL_DATA: DischargeData = {
   treatmentGiven: [],
   hospitalCourse: '',
   dischargeAdvice: '',
-  followUp: ''
+  followUp: '',
+  dischargeAgainstMedicalAdvice: false
 };
