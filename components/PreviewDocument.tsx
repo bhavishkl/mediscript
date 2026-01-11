@@ -129,9 +129,6 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
           </section>
         )}
 
-        {/* Page Break Trigger - Everything after this moves to next page */}
-        <div style={{ pageBreakBefore: 'always', height: 0, display: 'block' }}></div>
-
         {/* Treatment Given - Table Format */}
         {data.treatmentGiven.length > 0 && (
           <section className="mt-8">
