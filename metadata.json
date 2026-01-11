@@ -1,0 +1,5 @@
+{
+  "name": "MediScript Discharge Summary",
+  "description": "A professional discharge summary generator that mimics standard hospital formats. Features local storage persistence, logo uploading, and PDF export.",
+  "requestFramePermissions": []
+}
