@@ -35,6 +35,133 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
     return pairs;
   }, [data.treatmentGiven]);
 
+  // Logic to split investigations between Page 1 and Page 2
+  // We approximate the number of lines available on Page 1.
+  // Header ~ 50mm
+  // Patient Info ~ 40mm
+  // Diagnosis + Clinical Presentation ~ Variable, let's assume 5-6 lines each = ~40mm
+  // Total used: ~130mm
+  // Available for investigations: 297mm - 130mm - 20mm (margins) = ~147mm
+  // Each investigation row ~ 7-8mm
+  // Max rows ~ 18-20 lines.
+
+  const { investigationsPage1, investigationsPage2 } = useMemo(() => {
+    const MAX_LINES_PAGE_1 = 15; // Conservative limit
+    let currentLineCount = 0;
+
+    // Estimate lines from Diagnosis and Presentation
+    // We approximate that one line is about 90 characters for full width text areas
+    const countEstimatedLines = (text: string) => {
+      if (!text) return 1;
+      const explicitLines = text.split('\n');
+      return explicitLines.reduce((acc, line) => {
+        // Assume roughly 90 chars per line (conservative)
+        const wrappedLines = Math.max(1, Math.ceil(line.length / 90));
+        return acc + wrappedLines;
+      }, 0);
+    };
+
+    const diagnosisLines = countEstimatedLines(data.finalDiagnosis);
+    const presentationLines = countEstimatedLines(data.clinicalPresentation);
+
+    // Adjust max lines based on content above
+    // If diagnosis/presentation are long, we have less space.
+    // Let's say we have a fixed budget of "slots" for the bottom half.
+    // If we assume the top half is fixed, we have the bottom half.
+    // Let's use a simpler approach: fixed number of investigation items + headers.
+
+    const page1Groups: Record<string, InvestigationEntry[]> = {};
+    const page2Groups: Record<string, InvestigationEntry[]> = {};
+
+    let isPage1Full = false;
+    // We deduct lines used by text fields from the budget
+    // Assuming each text line consumes same height as investigation row for simplicity
+    let availableLines = 22 - (diagnosisLines + presentationLines);
+    if (availableLines < 5) availableLines = 5; // Ensure at least some space or just flow to next page?
+
+    Object.entries(groupedInvestigations).forEach(([category, items]) => {
+      if (isPage1Full) {
+        page2Groups[category] = items;
+        return;
+      }
+
+      // Check if category header fits
+      if (currentLineCount + 1 > availableLines) {
+         isPage1Full = true;
+         page2Groups[category] = items;
+         return;
+      }
+
+      // Category header takes 1 line
+      currentLineCount += 1;
+
+      // Now check items
+      const page1Items: InvestigationEntry[] = [];
+      const page2Items: InvestigationEntry[] = [];
+
+      items.forEach(item => {
+        if (isPage1Full) {
+          page2Items.push(item);
+        } else {
+           if (currentLineCount + 1 <= availableLines) {
+             page1Items.push(item);
+             currentLineCount += 1;
+           } else {
+             isPage1Full = true;
+             page2Items.push(item);
+           }
+        }
+      });
+
+      if (page1Items.length > 0) {
+        page1Groups[category] = page1Items;
+      }
+
+      if (page2Items.length > 0) {
+        // If we split a category, we might want to repeat header or just list items?
+        // User said "create new table", so repeated header or just continue is fine.
+        // If we put it in page2Groups, our renderer handles it by creating a header.
+        // But if page1Items was empty, we already handled it.
+        // If page1Items has some, and page2Items has some, we add page2Items to page2Groups
+        // which will render a header again on Page 2. This is good practice.
+        page2Groups[category] = page2Items;
+      }
+    });
+
+    return { investigationsPage1: page1Groups, investigationsPage2: page2Groups };
+  }, [groupedInvestigations, data.finalDiagnosis, data.clinicalPresentation]);
+
+
+  const renderInvestigations = (groups: Record<string, InvestigationEntry[]>) => {
+    return (
+      <div className="w-full border border-black text-base">
+        {Object.entries(groups).map(([category, items], catIndex) => (
+          <React.Fragment key={category}>
+            {/* Category Header */}
+            <div className={`font-bold p-1 bg-gray-100 uppercase border-b border-black`}>
+              {category}
+            </div>
+            {/* Items */}
+            {items.map((item) => (
+              <div key={item.id} className="flex border-b border-black last:border-b-0">
+                {/* Date Column */}
+                <div className="w-28 p-1 border-r border-black flex-shrink-0">
+                  {formatDate(item.date)}
+                </div>
+                {/* Description Column */}
+                <div className="flex-1 p-1">
+                  <span className="font-semibold">{item.name}</span>
+                  {item.name && item.result && <span> - </span>}
+                  <span>{item.result}</span>
+                </div>
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div ref={ref} className="bg-gray-100 print:bg-white text-black font-sans">
 
@@ -100,40 +227,11 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
             <div className="whitespace-pre-line pl-1">{data.clinicalPresentation}</div>
           </section>
 
-          {/* Investigations - Table Format */}
-          {data.investigations.length > 0 && (
+          {/* Investigations - Page 1 Part */}
+          {Object.keys(investigationsPage1).length > 0 && (
             <section>
               <h2 className="font-bold uppercase text-base mb-2 underline">Investigations:</h2>
-              <div className="w-full border border-black text-base">
-                {(() => {
-                  const categories = Object.entries(groupedInvestigations);
-                  return categories.map(([category, items]: [string, InvestigationEntry[]], catIndex) => {
-                    return (
-                      <React.Fragment key={category}>
-                        {/* Category Header */}
-                        <div className={`font-bold p-1 bg-gray-100 uppercase border-b border-black`}>
-                          {category}
-                        </div>
-                        {/* Items */}
-                        {items.map((item, index) => (
-                          <div key={item.id} className="flex border-b border-black last:border-b-0">
-                            {/* Date Column */}
-                            <div className="w-28 p-1 border-r border-black flex-shrink-0">
-                              {formatDate(item.date)}
-                            </div>
-                            {/* Description Column */}
-                            <div className="flex-1 p-1">
-                              <span className="font-semibold">{item.name}</span>
-                              {item.name && item.result && <span> - </span>}
-                              <span>{item.result}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </React.Fragment>
-                    );
-                  });
-                })()}
-              </div>
+              {renderInvestigations(investigationsPage1)}
             </section>
           )}
         </div>
@@ -141,6 +239,15 @@ export const PreviewDocument = forwardRef<HTMLDivElement, PreviewDocumentProps>(
 
       {/* Second Page */}
       <div className="a4-page bg-white shadow-lg mx-auto print:shadow-none relative page-break">
+
+         {/* Overflow Investigations */}
+         {Object.keys(investigationsPage2).length > 0 && (
+            <section className="mb-6">
+              <h2 className="font-bold uppercase text-base mb-2 underline">Investigations (Continued):</h2>
+              {renderInvestigations(investigationsPage2)}
+            </section>
+         )}
+
          {/* Treatment Given - Table Format */}
          {data.treatmentGiven.length > 0 && (
           <section>
