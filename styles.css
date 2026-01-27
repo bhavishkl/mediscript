@@ -1,0 +1,45 @@
+@media print {
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .print-area {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+.page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+/* Simulate A4 page in preview */
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 10mm; /* Adjust padding as needed for "precision" */
+  margin: 10mm auto;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Hide the shadow and margin when printing */
+@media print {
+  .a4-page {
+    margin: 0;
+    box-shadow: none;
+    min-height: auto; /* Allow content to flow naturally across pages */
+    height: auto;
+    /* Removed page-break-after to avoid extra blank pages */
+  }
+
+  body {
+    background: white;
+  }
+}
