@@ -3,9 +3,7 @@ import { DischargeData, INITIAL_DATA } from './types';
 import { EditorForm } from './components/EditorForm';
 import { PreviewDocument } from './components/PreviewDocument';
 import { Download, RefreshCw, Eye, Edit3, Save } from 'lucide-react';
-
-// Declaration for html2pdf which is loaded via CDN
-declare const html2pdf: any;
+import { generateWordDocument } from './utils/wordGenerator';
 
 const App: React.FC = () => {
   const [data, setData] = useState<DischargeData>(INITIAL_DATA);
@@ -48,30 +46,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (!previewRef.current) return;
+  const handleExportWord = async () => {
     setIsGenerating(true);
-
-    const element = previewRef.current;
-    
-    // Config for html2pdf
-    const opt = {
-      margin: 4, // mm - Reduced margin
-      filename: `${data.patientName || 'Patient'}_Discharge_Summary.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    const wasEditMode = activeTab === 'edit';
-    if(wasEditMode) setActiveTab('preview');
-
-    setTimeout(() => {
-      html2pdf().set(opt).from(element).save().then(() => {
-        setIsGenerating(false);
-        if(wasEditMode) setActiveTab('edit');
-      });
-    }, 100);
+    try {
+      await generateWordDocument(data);
+    } catch (e) {
+      console.error("Failed to generate Word document", e);
+      alert("Failed to generate Word document");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -93,12 +77,12 @@ const App: React.FC = () => {
                 <RefreshCw size={20} />
               </button>
               <button 
-                onClick={handleDownloadPDF}
+                onClick={handleExportWord}
                 disabled={isGenerating}
                 className="flex items-center gap-2 bg-white text-teal-800 px-4 py-2 rounded-md font-medium hover:bg-teal-50 transition-colors disabled:opacity-50"
               >
                 <Download size={18} />
-                {isGenerating ? 'Generating...' : 'Export PDF'}
+                {isGenerating ? 'Generating...' : 'Export Word'}
               </button>
             </div>
           </div>
